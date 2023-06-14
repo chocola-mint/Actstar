@@ -7,6 +7,6 @@
     "author": "ChocolaMint (https://github.com/chocola-mint)",
     "homepage": "https://github.com/Actstar#readme",
     "dependencies": {
-        "com.codewriter.triinspector": "1.11.0"
+        "com.unity.inputsystem": "1.5.1"
     }
 }
