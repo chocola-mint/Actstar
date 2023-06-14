@@ -1,6 +1,6 @@
 # Actstar
 
-Rigidbody-based 2D platformer system for Unity
+Rigidbody-based 2D platformer framework for Unity
 
 ## Dependencies
 
