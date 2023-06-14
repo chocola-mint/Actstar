@@ -1,0 +1,12 @@
+{
+    "name": "com.chocola-mint.actstar",
+    "displayName": "Actstar",
+    "description": "Rigidbody-based 2D platformer system for Unity",
+    "version": "0.1",
+    "unity": "2021.3",
+    "author": "ChocolaMint (https://github.com/chocola-mint)",
+    "homepage": "https://github.com/Actstar#readme",
+    "dependencies": {
+        "com.codewriter.triinspector": "1.11.0"
+    }
+}
