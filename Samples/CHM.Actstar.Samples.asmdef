@@ -1,0 +1,17 @@
+{
+    "name": "CHM.Actstar.Samples",
+    "rootNamespace": "",
+    "references": [
+        "GUID:daf86dae2d2acc94f9fdc05b9bea38e4",
+        "GUID:75469ad4d38634e559750d17036d5f7c"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

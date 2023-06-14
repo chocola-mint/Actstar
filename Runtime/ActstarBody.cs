@@ -35,6 +35,10 @@ namespace CHM.Actstar
         public Vector2 groundDamping = new(0.85f, 1f);
         public Vector2 airDamping = new(0.95f, 1f);
         public Vector2 Velocity => rb.velocity;
+        [Tooltip(
+@"Enable to automatically parent to objects that collide with the body.
+Good for making the body stick to moving platforms.")]
+        public bool sticky = true;
         public void SetMoveVelocityX(float x)
         {
             moveVelocity.x = x;
@@ -82,6 +86,21 @@ namespace CHM.Actstar
             }
             animVelocity = moveVelocity = Vector2.zero;
             moveXSet = moveYSet = animVelocitySet = false;
+        }
+        // void OnCollisionEnter2D(Collision2D other) 
+        // {
+        //     if(other.relativeVelocity.sqrMagnitude <= stickySpeedLimit * stickySpeedLimit)
+        //         transform.SetParent(other.transform);
+        // }
+        void OnCollisionStay2D(Collision2D other) 
+        {
+            if(sticky)
+                transform.SetParent(other.transform);
+        }
+        void OnCollisionExit2D(Collision2D other) 
+        {
+            if(other.transform == transform.parent) 
+                transform.SetParent(null);
         }
     }
 }
