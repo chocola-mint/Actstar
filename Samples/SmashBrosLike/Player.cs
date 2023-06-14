@@ -16,7 +16,9 @@ namespace CHM.Actstar.Samples.SmashBrosLike
 
         void FixedUpdate()
         {
-            if(!boundary.Contains(transform.position + new Vector3(boundary.width, boundary.height, 0) / 2))
+            if(!boundary.Contains(
+                transform.position 
+                + new Vector3(boundary.width, boundary.height, 0) / 2))
                 transform.position = spawnPosition;
         }
         void OnDrawGizmosSelected() 
