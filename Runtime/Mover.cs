@@ -17,6 +17,7 @@ namespace CHM.Actstar
         public float dashSpeed = 6;
         [Range(0, 50)]
         public float airDashSpeed = 5;
+        public bool lockYWhenDashing = false;
         [ShowInPlayMode, ShowInInspector]
         public float MoveAxis { get; private set; }
         [ShowInPlayMode, ShowInInspector]
@@ -42,6 +43,8 @@ namespace CHM.Actstar
                 moveSpeed = IsDashing ? dashSpeed : speed;
             else moveSpeed = IsDashing ? airDashSpeed : airSpeed;
             body.SetMoveVelocityX(MoveAxis * moveSpeed);
+            if(lockYWhenDashing && IsDashing)
+                body.SetMoveVelocityY(0);
         }
         public void Move(float moveAxis)
         {
