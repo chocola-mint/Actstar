@@ -7,17 +7,6 @@ namespace CHM.Actstar
 {
     /// <summary>
     /// A meditator for a velocity-based Rigidbody2D.
-    /// Maintains a list of weighted velocities, represented by a virtual "channel".
-    /// <br>
-    /// A channel is identified by an integer priority.
-    /// Channels with higher priority will overwrite channels with lower priority.
-    /// The highest priority channel's velocities' weighted average is assigned to
-    /// the underlying Rigidbody2D.
-    /// </br>
-    /// <br>
-    /// It is recommended to use enums to organize custom channels. Note that
-    /// the channel "int.MinValue" is reserved and should NOT be used.
-    /// </br>
     /// </summary>
     [DefaultExecutionOrder(1000)]
     [RequireComponent(typeof(CollisionState))]
@@ -87,11 +76,6 @@ Good for making the body stick to moving platforms.")]
             animVelocity = moveVelocity = Vector2.zero;
             moveXSet = moveYSet = animVelocitySet = false;
         }
-        // void OnCollisionEnter2D(Collision2D other) 
-        // {
-        //     if(other.relativeVelocity.sqrMagnitude <= stickySpeedLimit * stickySpeedLimit)
-        //         transform.SetParent(other.transform);
-        // }
         void OnCollisionStay2D(Collision2D other) 
         {
             if(sticky)
@@ -99,8 +83,9 @@ Good for making the body stick to moving platforms.")]
         }
         void OnCollisionExit2D(Collision2D other) 
         {
-            if(other.transform == transform.parent) 
-                transform.SetParent(null);
+            if(sticky)
+                if(other.transform == transform.parent) 
+                    transform.SetParent(null);
         }
     }
 }
