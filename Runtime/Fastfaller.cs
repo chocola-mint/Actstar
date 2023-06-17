@@ -17,7 +17,7 @@ namespace CHM.Actstar
         private ActstarBody body;
         private Jumper jumper; // Can be null!
         [ShowInPlayMode, ShowInInspector, ReadOnly]
-        private bool active = false;
+        public bool IsFastfalling { get; private set; } = false;
         [Range(-100, -0.1f), Tooltip("The fastfalling acceleration.")]
         public float acceleration = -30.0f;
         [Range(-100, -0.1f), Tooltip("The minimum speed that can be reached via fastfalling.")]
@@ -32,15 +32,15 @@ namespace CHM.Actstar
         }
         public void StartFastfall()
         {
-            active = true;
+            IsFastfalling = true;
         }
         public void CancelFastfall()
         {
-            active = false;
+            IsFastfalling = false;
         }
         void FixedUpdate() 
         {
-            if(!active) return;
+            if(!IsFastfalling) return;
             if(collisionState.IsGrounded) return;
             if(jumper && jumper.IsJumping) return;
             float speed = body.Velocity.y + acceleration * Time.fixedDeltaTime;
