@@ -71,12 +71,25 @@ namespace CHM.Actstar
         + ComputeNormal(rightBuffer, numRightContacts)).normalized;
         [ShowInPlayMode, ShowInInspector]
         public Vector2 CeilingNormal => ComputeNormal(ceilingBuffer, numCeilingContacts).normalized;
+        public IEnumerable<ContactPoint2D> GetGroundContacts() 
+        => EnumerateContacts(groundBuffer, numGroundContacts);
+        public IEnumerable<ContactPoint2D> GetLeftContacts() 
+        => EnumerateContacts(leftBuffer, numLeftContacts);
+        public IEnumerable<ContactPoint2D> GetRightContacts() 
+        => EnumerateContacts(rightBuffer, numRightContacts);
+        public IEnumerable<ContactPoint2D> GetCeilingContacts() 
+        => EnumerateContacts(ceilingBuffer, numCeilingContacts);
         private Rigidbody2D rb;
         private int numGroundContacts, numLeftContacts, numRightContacts, numCeilingContacts;
         private List<ContactPoint2D> groundBuffer = new();
         private List<ContactPoint2D> leftBuffer = new();
         private List<ContactPoint2D> rightBuffer = new();
         private List<ContactPoint2D> ceilingBuffer = new();
+        private IEnumerable<ContactPoint2D> EnumerateContacts(List<ContactPoint2D> contacts, int numContacts)
+        {
+            for(int i = 0; i < numContacts; ++i)
+                yield return contacts[i];
+        }
         private Vector2 ComputeNormal(List<ContactPoint2D> contacts, int numContacts)
         {
             Vector2 result = Vector2.zero;
