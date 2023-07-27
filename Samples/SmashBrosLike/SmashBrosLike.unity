@@ -1552,6 +1552,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   acceleration: -30
   terminalSpeed: -20
+  toggleFallthrough: 1
+  probeWidth: 8
+  probeHeight: 10000
+  drawProbeArea: 0
 --- !u!114 &1008939955
 MonoBehaviour:
   m_ObjectHideFlags: 0
