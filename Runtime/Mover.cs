@@ -38,11 +38,32 @@ namespace CHM.Actstar
             if(collisionState.IsTouchingRight && MoveAxis > 0
             || collisionState.IsTouchingLeft && MoveAxis < 0)
                 return;
-            float moveSpeed;
             if(collisionState.IsGrounded)
-                moveSpeed = IsDashing ? dashSpeed : speed;
-            else moveSpeed = IsDashing ? airDashSpeed : airSpeed;
+                GroundMoveUpdate();
+            else AirMoveUpdate();
+            DashLockYUpdate();
+        }
+        private void GroundMoveUpdate()
+        {
+            float moveSpeed = IsDashing ? dashSpeed : speed;
+            var alongSurface = Vector2.Perpendicular(collisionState.GroundNormal);
+            // Align with move axis.
+            if(alongSurface.x * MoveAxis < 0) alongSurface *= -1;
+            Vector2 vel = alongSurface.normalized * moveSpeed;
+            body.SetMoveVelocityX(vel.x);
+            if(!Mathf.Approximately(vel.y, 0))
+            { 
+                vel.y -= 0.1f; // bias
+                body.SetMoveVelocityY(vel.y);
+            }
+        }
+        private void AirMoveUpdate()
+        {
+            float moveSpeed = IsDashing ? airDashSpeed : airSpeed;
             body.SetMoveVelocityX(MoveAxis * moveSpeed);
+        }
+        private void DashLockYUpdate()
+        {
             if(lockYWhenDashing && IsDashing)
                 body.SetMoveVelocityY(0);
         }
