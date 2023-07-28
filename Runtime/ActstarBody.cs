@@ -63,7 +63,8 @@ Good for making the body stick to moving platforms.")]
             {
                 moveWeight = Mathf.Min(moveWeight + Time.fixedDeltaTime, 1);
             }
-            var trueMoveVelocity = rb.velocity * (collisionState.IsGrounded ? groundDamping : airDamping);
+            Vector2 damping = collisionState.IsGrounded ? groundDamping : airDamping;
+            Vector2 trueMoveVelocity = rb.velocity * damping;
             if(moveXSet)
                 trueMoveVelocity.x = moveVelocity.x;
             if(moveYSet)
