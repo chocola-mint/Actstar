@@ -37,11 +37,20 @@ Good for making the body stick to moving platforms.")]
             moveVelocity.y = y;
             moveYSet = true;
         }
+        public void SetMoveVelocity(Vector2 velocity)
+        {
+            moveVelocity = velocity;
+            moveXSet = moveYSet = true;
+        }
         public void AddKnockbackImpulse(Vector2 impulse, float duration)
         {
             rb.AddForce(impulse, ForceMode2D.Impulse);
             remainingKnockbackDuration += duration;
             moveWeight = 0;
+        }
+        public void AddForce(Vector2 force)
+        {
+            rb.AddForce(force);
         }
         void Awake() 
         {
