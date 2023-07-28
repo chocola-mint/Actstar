@@ -16,10 +16,9 @@ namespace CHM.Actstar
         private CollisionState collisionState;
         private Rigidbody2D rb;
         private Vector2 moveVelocity = Vector2.zero;
-        private Vector2 animVelocity = Vector2.zero;
         private float remainingKnockbackDuration = 0;
         private float moveWeight = 1;
-        private bool moveXSet = false, moveYSet = false, animVelocitySet = false;
+        private bool moveXSet = false, moveYSet = false;
         [InfoBox("Damping is used to slow down the Rigidbody. Numbers close to 1 are recommended.")]
         public Vector2 groundDamping = new(0.85f, 1f);
         public Vector2 airDamping = new(0.95f, 1f);
@@ -44,11 +43,6 @@ Good for making the body stick to moving platforms.")]
             remainingKnockbackDuration += duration;
             moveWeight = 0;
         }
-        public void SetAnimVelocity(Vector2 velocity)
-        {
-            animVelocity = velocity;
-            animVelocitySet = true;
-        }
         void Awake() 
         {
             TryGetComponent<Rigidbody2D>(out rb);
@@ -56,25 +50,18 @@ Good for making the body stick to moving platforms.")]
         }
         void FixedUpdate() 
         {
-            if(animVelocitySet)
+            if(remainingKnockbackDuration <= 0)
             {
-                rb.velocity = animVelocity;
+                moveWeight = Mathf.Min(moveWeight + Time.fixedDeltaTime, 1);
             }
-            else
-            {
-                if(remainingKnockbackDuration <= 0)
-                {
-                    moveWeight = Mathf.Min(moveWeight + Time.fixedDeltaTime, 1);
-                }
-                var trueMoveVelocity = rb.velocity * (collisionState.IsGrounded ? groundDamping : airDamping);
-                if(moveXSet)
-                    trueMoveVelocity.x = moveVelocity.x;
-                if(moveYSet)
-                    trueMoveVelocity.y = moveVelocity.y;
-                rb.velocity = Vector3.Slerp(rb.velocity, trueMoveVelocity, moveWeight); 
-            }
-            animVelocity = moveVelocity = Vector2.zero;
-            moveXSet = moveYSet = animVelocitySet = false;
+            var trueMoveVelocity = rb.velocity * (collisionState.IsGrounded ? groundDamping : airDamping);
+            if(moveXSet)
+                trueMoveVelocity.x = moveVelocity.x;
+            if(moveYSet)
+                trueMoveVelocity.y = moveVelocity.y;
+            rb.velocity = Vector3.Slerp(rb.velocity, trueMoveVelocity, moveWeight); 
+            
+            moveXSet = moveYSet = false;
         }
         void OnCollisionStay2D(Collision2D other) 
         {
