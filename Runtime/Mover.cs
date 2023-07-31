@@ -33,12 +33,13 @@ namespace CHM.Actstar
         }
         void FixedUpdate() 
         {
-            if(Mathf.Approximately(MoveAxis, 0)) return;
+            if(Mathf.Approximately(MoveAxis, 0)) 
+                return;
             // Prevent moving against walls to get stuck on them.
             if(collisionState.IsTouchingRight && MoveAxis > 0
             || collisionState.IsTouchingLeft && MoveAxis < 0)
                 return;
-            if(collisionState.IsGrounded)
+            if(body.IsGrounded)
                 GroundMoveUpdate();
             else AirMoveUpdate();
             DashLockYUpdate();
@@ -46,14 +47,15 @@ namespace CHM.Actstar
         private void GroundMoveUpdate()
         {
             float moveSpeed = IsDashing ? dashSpeed : speed;
-            var alongSurface = Vector2.Perpendicular(collisionState.GroundNormal);
-            // Align with move axis.
-            if(alongSurface.x * MoveAxis < 0) alongSurface *= -1;
+            var alongSurface = Vector2.Perpendicular(collisionState.BottomNormal);
+            // Align with move axis. Perpendicular rotates the vector CCW.
+            // Since the bottom normal faces upwards, this means it will be facing -X.
+            alongSurface *= -MoveAxis;
             Vector2 vel = alongSurface.normalized * moveSpeed;
             body.SetMoveVelocityX(vel.x);
             if(!Mathf.Approximately(vel.y, 0))
             { 
-                vel.y -= 0.1f; // bias
+                // vel.y -= 0.1f; // bias
                 body.SetMoveVelocityY(vel.y);
             }
         }
@@ -73,7 +75,7 @@ namespace CHM.Actstar
         }
         public void StartDashing()
         {
-            if(collisionState.IsGrounded)
+            if(body.IsGrounded)
                 IsDashing = true;
         }
         public void StopDashing()

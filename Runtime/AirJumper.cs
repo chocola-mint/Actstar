@@ -5,6 +5,10 @@ using TriInspector;
 
 namespace CHM.Actstar
 {
+    /// <summary>
+    /// Jump implementation that lets the player jump multiple times in midair.
+    /// This is the most common type of "multi-jump" in 2D platformers.
+    /// </summary>
     public class AirJumper : Jumper
     {
         
@@ -50,6 +54,7 @@ namespace CHM.Actstar
                 float jumpSpeed = GetCurrentJumpCurve()
                 .Evaluate(t);
                 body.SetMoveVelocityY(jumpSpeed);
+                body.SetRising();
             }
         }
         private void AdvanceJumpPointer()

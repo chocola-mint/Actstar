@@ -7,12 +7,7 @@ namespace CHM.Actstar
 {
     /// <summary>
     /// Tracks the collision state of a Rigidbody2D component,
-    /// such as whether it's grounded or not. Very useful in platformers.
-    /// <br>
-    /// The implementation does not use raycasts, making it work with any
-    /// collision shape, though a convex shape like a capsule or a box is
-    /// recommended.
-    /// </br>
+    /// such as if it's touching a wall.
     /// </summary>
     [DeclareBoxGroup("Runtime", Title = "Runtime Info")]
     [DeclareBoxGroup("Filters", Title = "Contact Filters")]
@@ -22,23 +17,19 @@ namespace CHM.Actstar
     {
         
         [GroupNext("Filters")]
-        public ContactFilter2D ground = new(){
-            useNormalAngle = true,
+        public ProbeSettings bottom = new(){
             minNormalAngle = 15,
             maxNormalAngle = 165,
         };
-        public ContactFilter2D left = new(){
-            useNormalAngle = true,
+        public ProbeSettings left = new(){
             minNormalAngle = 0 - 15,
             maxNormalAngle = 0 + 15,
         };
-        public ContactFilter2D right = new(){
-            useNormalAngle = true,
+        public ProbeSettings right = new(){
             minNormalAngle = 180 - 15,
             maxNormalAngle = 180 + 15,
         };
-        public ContactFilter2D ceiling = new(){
-            useNormalAngle = true,
+        public ProbeSettings top = new(){
             minNormalAngle = -165,
             maxNormalAngle = -15,
         };
@@ -51,71 +42,116 @@ namespace CHM.Actstar
         [Button("Mirror Filters (Ground -> Ceiling)")]
         public void MirrorFiltersGC()
         {
-            ceiling.minNormalAngle = ground.minNormalAngle - 180;
-            ceiling.maxNormalAngle = ground.maxNormalAngle - 180;
+            top.minNormalAngle = bottom.minNormalAngle - 180;
+            top.maxNormalAngle = bottom.maxNormalAngle - 180;
         }
         [GroupNext("Runtime")]
-        [ShowInPlayMode, ShowInInspector]
-        public bool IsGrounded => numGroundContacts > 0;
-        [ShowInPlayMode, ShowInInspector]
-        public bool IsTouchingCeiling => numCeilingContacts > 0;
-        [ShowInPlayMode, ShowInInspector]
-        public bool IsTouchingLeft => numLeftContacts > 0;
-        [ShowInPlayMode, ShowInInspector]
-        public bool IsTouchingRight => numRightContacts > 0;
+        [HideInEditMode, ShowInInspector]
+        public bool IsTouchingBottom => bottomProbe.GetHasHits();
+        // * idea: keep track if last frame was grounded.
+        // *       then, if was not grounded, also require velocity to be approx zero.
+        [HideInEditMode, ShowInInspector]
+        public bool IsTouchingTop => topProbe.GetHasHits();
+        [HideInEditMode, ShowInInspector]
+        public bool IsTouchingLeft => leftProbe.GetHasHits();
+        [HideInEditMode, ShowInInspector]
+        public bool IsTouchingRight => rightProbe.GetHasHits();
         public bool IsTouchingSide => IsTouchingLeft || IsTouchingRight;
-        [ShowInPlayMode, ShowInInspector]
-        public Vector2 GroundNormal => ComputeNormal(groundBuffer, numGroundContacts).normalized;
-        [ShowInPlayMode, ShowInInspector]
-        public Vector2 SideNormal => (ComputeNormal(leftBuffer, numLeftContacts) 
-        + ComputeNormal(rightBuffer, numRightContacts)).normalized;
-        [ShowInPlayMode, ShowInInspector]
-        public Vector2 CeilingNormal => ComputeNormal(ceilingBuffer, numCeilingContacts).normalized;
-        public IEnumerable<ContactPoint2D> GetGroundContacts() 
-        => EnumerateContacts(groundBuffer, numGroundContacts);
-        public IEnumerable<ContactPoint2D> GetLeftContacts() 
-        => EnumerateContacts(leftBuffer, numLeftContacts);
-        public IEnumerable<ContactPoint2D> GetRightContacts() 
-        => EnumerateContacts(rightBuffer, numRightContacts);
-        public IEnumerable<ContactPoint2D> GetCeilingContacts() 
-        => EnumerateContacts(ceilingBuffer, numCeilingContacts);
+        [HideInEditMode, ShowInInspector]
+        public Vector2 BottomNormal => bottomProbe.GetNormal();
+        [HideInEditMode, ShowInInspector]
+        public Vector2 SideNormal => (leftProbe.GetNormal() + rightProbe.GetNormal()).normalized;
+        [HideInEditMode, ShowInInspector]
+        public Vector2 TopNormal => topProbe.GetNormal();
         private Rigidbody2D rb;
-        private int numGroundContacts, numLeftContacts, numRightContacts, numCeilingContacts;
-        private List<ContactPoint2D> groundBuffer = new();
-        private List<ContactPoint2D> leftBuffer = new();
-        private List<ContactPoint2D> rightBuffer = new();
-        private List<ContactPoint2D> ceilingBuffer = new();
-        private IEnumerable<ContactPoint2D> EnumerateContacts(List<ContactPoint2D> contacts, int numContacts)
-        {
-            for(int i = 0; i < numContacts; ++i)
-                yield return contacts[i];
-        }
-        private Vector2 ComputeNormal(List<ContactPoint2D> contacts, int numContacts)
-        {
-            Vector2 result = Vector2.zero;
-            for(int i = 0; i < numContacts; ++i)
-                result += contacts[i].normal * contacts[i].normalImpulse;
-            return result;
-        }
+        private Probe bottomProbe, leftProbe, rightProbe, topProbe;
+        private bool wasGrounded = true;
         #region Unity Events
-        void OnValidate() 
-        {
-            ground.useNormalAngle 
-            = left.useNormalAngle 
-            = right.useNormalAngle 
-            = ceiling.useNormalAngle = true;
-        }
         void Awake() 
         {
             TryGetComponent<Rigidbody2D>(out rb);
         }
+        void Start() 
+        {
+            bottomProbe = Probe.Create(gameObject, bottom, Vector2.down, rb);
+            leftProbe = Probe.Create(gameObject, left, Vector2.left, rb);
+            rightProbe = Probe.Create(gameObject, right, Vector2.right, rb);
+            topProbe = Probe.Create(gameObject, top, Vector2.up, rb);
+        }
         void FixedUpdate() 
         {
-            numGroundContacts = rb.GetContacts(ground, groundBuffer);
-            numLeftContacts = rb.GetContacts(left, leftBuffer);
-            numRightContacts = rb.GetContacts(right, rightBuffer);
-            numCeilingContacts = rb.GetContacts(ceiling, ceilingBuffer);
+            wasGrounded = IsTouchingBottom;
+            bottomProbe.DoFixedUpdate();
+            leftProbe.DoFixedUpdate();
+            rightProbe.DoFixedUpdate();
+            topProbe.DoFixedUpdate();
         }
         #endregion
+        [System.Serializable]
+        public class ProbeSettings
+        {
+            public float minNormalAngle, maxNormalAngle;
+        }
+        internal class Probe : MonoBehaviour
+        {
+            private ContactFilter2D filter;
+            public Vector2 direction;
+            public Rigidbody2D rb;
+            public float minProbeDistance = 0.1f;
+            private int numHits;
+            public bool HasHits => numHits > 0;
+            private List<RaycastHit2D> hits = new();
+            private Vector2? normalCache = null;
+            public Vector2 Normal {
+                get {
+                    if(!normalCache.HasValue)  
+                    {
+                        Vector2 result = Vector2.zero;
+                        for(int i = 0; i < numHits; ++i)
+                            result += hits[i].normal;
+                        normalCache = result.normalized;
+                    }
+                    return normalCache.Value;
+                }
+            }
+            public static Probe Create(GameObject attachTo, ProbeSettings probeSettings, Vector2 direction, Rigidbody2D rb, float minProbeDistance = 0.1f)
+            {
+                Probe probe = attachTo.AddComponent<Probe>();
+                probe.filter = new(){
+                    useNormalAngle = true,
+                    minNormalAngle = probeSettings.minNormalAngle,
+                    maxNormalAngle = probeSettings.maxNormalAngle,
+                };
+                probe.direction = direction;
+                probe.rb = rb;
+                probe.minProbeDistance = minProbeDistance;
+                probe.hideFlags |= HideFlags.HideInInspector;
+                return probe;
+            }
+            public void DoFixedUpdate() 
+            {
+                float nextStepLength = Vector2.Dot(rb.velocity * Time.fixedDeltaTime, direction);
+                float probeDistance = Mathf.Max(minProbeDistance, nextStepLength);
+                numHits = rb.Cast(direction, filter, hits, probeDistance);
+                normalCache = null;
+            }
+        }
+    }
+    internal static class Extensions
+    {
+        public static bool GetHasHits(this CollisionState.Probe probe)
+        {
+            #if UNITY_EDITOR
+            if(!probe) return false;
+            #endif
+            return probe.HasHits;
+        }
+        public static Vector2 GetNormal(this CollisionState.Probe probe)
+        {
+            #if UNITY_EDITOR
+            if(!probe) return Vector2.zero;
+            #endif
+            return probe.Normal;
+        }
     }
 }

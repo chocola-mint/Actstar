@@ -27,6 +27,17 @@ namespace CHM.Actstar
 @"Enable to automatically parent to objects that collide with the body.
 Good for making the body stick to moving platforms.")]
         public bool sticky = true;
+        private enum VerticalState
+        {
+            Grounded, // Initial state
+            Rising, // Y speed > 0
+            Falling, // Y speed <= 0
+        }
+        [ReadOnly, ShowInInspector, ShowInPlayMode]
+        private VerticalState verticalState = VerticalState.Grounded;
+        public bool IsGrounded => verticalState == VerticalState.Grounded;
+        public bool IsRising => verticalState == VerticalState.Rising;
+        public bool IsFalling => verticalState == VerticalState.Falling;
         public void SetMoveVelocityX(float x)
         {
             moveVelocity.x = x;
@@ -41,6 +52,10 @@ Good for making the body stick to moving platforms.")]
         {
             moveVelocity = velocity;
             moveXSet = moveYSet = true;
+        }
+        public void SetRising()
+        {
+            verticalState = VerticalState.Rising;
         }
         public void AddKnockbackImpulse(Vector2 impulse, float duration)
         {
@@ -63,26 +78,48 @@ Good for making the body stick to moving platforms.")]
             {
                 moveWeight = Mathf.Min(moveWeight + Time.fixedDeltaTime, 1);
             }
-            Vector2 damping = collisionState.IsGrounded ? groundDamping : airDamping;
+            Vector2 damping = collisionState.IsTouchingBottom ? groundDamping : airDamping;
             Vector2 trueMoveVelocity = rb.velocity * damping;
             if(moveXSet)
                 trueMoveVelocity.x = moveVelocity.x;
             if(moveYSet)
                 trueMoveVelocity.y = moveVelocity.y;
+
+            UpdateVerticalState();
+            
             rb.velocity = Vector3.Slerp(rb.velocity, trueMoveVelocity, moveWeight); 
             
             moveXSet = moveYSet = false;
         }
         void OnCollisionStay2D(Collision2D other) 
         {
-            if(sticky)
-                transform.SetParent(other.transform);
+            if(sticky && other.rigidbody)
+                transform.SetParent(other.rigidbody.transform);
         }
         void OnCollisionExit2D(Collision2D other) 
         {
-            if(sticky)
-                if(other.transform == transform.parent) 
+            if(sticky && other.rigidbody)
+                if(other.rigidbody.transform == transform.parent) 
                     transform.SetParent(null);
+        }
+        private void UpdateVerticalState()
+        {
+            switch(verticalState)
+            {
+                case VerticalState.Rising:
+                    if(rb.velocity.y <= 0) verticalState = VerticalState.Falling;
+                    break;
+                case VerticalState.Falling:
+                    if(collisionState.IsTouchingBottom) verticalState = VerticalState.Grounded;
+                    else if(rb.velocity.y > 0) verticalState = VerticalState.Rising;
+                    break;
+                case VerticalState.Grounded:
+                default:
+                    if(collisionState.IsTouchingBottom) return; // todo: this doesn't cover every case
+                    if(rb.velocity.y <= 0) verticalState = VerticalState.Falling;
+                    else verticalState = VerticalState.Rising;
+                    break;
+            }
         }
     }
 }

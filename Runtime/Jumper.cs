@@ -5,7 +5,9 @@ using TriInspector;
 
 namespace CHM.Actstar
 {
-    [RequireComponent(typeof(CollisionState))]
+    /// <summary>
+    /// Base class for jump implementations.
+    /// </summary>
     [RequireComponent(typeof(ActstarBody))]
     public abstract class Jumper : MonoBehaviour
     {
@@ -13,17 +15,16 @@ namespace CHM.Actstar
         public float coyoteTime = 0.2f;
         #if UNITY_EDITOR
         [ShowInPlayMode, ShowInInspector, LabelText("Can Jump")]
-        private bool DebugCanJump => collisionState != null ? CanJump : false;
+        private bool DebugCanJump => Application.isPlaying ? CanJump : false;
         [ShowInPlayMode, ShowInInspector, LabelText("Is Jumping")]
-        private bool DebugIsJumping => collisionState != null ? IsJumping : false;
+        private bool DebugIsJumping => Application.isPlaying ? IsJumping : false;
         #endif
         public abstract bool CanJump { get; }
         public abstract bool IsJumping { get; }
-        protected CollisionState collisionState;
         protected ActstarBody body;
-        private bool wasCollisionStateGrounded = true;
+        private bool wasBodyGrounded = true;
         private float extendGroundTimeUntil = float.MinValue;
-        protected bool Grounded => collisionState.IsGrounded 
+        protected bool Grounded => body.IsGrounded 
         || Time.fixedTime < extendGroundTimeUntil;
         protected bool wasGrounded { get; private set; } = true;
         protected float previousJumpTime { get; private set; } = float.MinValue;
@@ -46,7 +47,6 @@ namespace CHM.Actstar
         protected abstract void OnJump();
         void Awake() 
         {
-            TryGetComponent<CollisionState>(out collisionState);
             TryGetComponent<ActstarBody>(out body);
             OnAwake();
         }
@@ -55,12 +55,12 @@ namespace CHM.Actstar
         {
             UpdateCoyoteTime();
             OnFixedUpdate();
-            wasCollisionStateGrounded = collisionState.IsGrounded;
+            wasBodyGrounded = body.IsGrounded;
             wasGrounded = Grounded;
         }
         private void UpdateCoyoteTime()
         {
-            if(!collisionState.IsGrounded && wasCollisionStateGrounded)
+            if(!body.IsGrounded && wasBodyGrounded)
             {
                 extendGroundTimeUntil = Time.fixedTime + coyoteTime;
             }
