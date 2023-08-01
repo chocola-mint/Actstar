@@ -16,7 +16,7 @@ namespace CHM.Actstar
     {
         private CollisionState collisionState;
         private ActstarBody body;
-        private Jumper jumper; // Can be null!
+        private IJumper jumper; // Can be null!
         private Platformer platformer; // Can be null!
         [ShowInPlayMode, ShowInInspector, ReadOnly]
         public bool IsFastfalling { get; private set; } = false;
@@ -40,7 +40,7 @@ namespace CHM.Actstar
         {
             TryGetComponent<CollisionState>(out collisionState);
             TryGetComponent<ActstarBody>(out body);
-            TryGetComponent<Jumper>(out jumper);
+            TryGetComponent<IJumper>(out jumper);
             TryGetComponent<Platformer>(out platformer);
         }
         public void StartFastfall()
@@ -71,7 +71,7 @@ namespace CHM.Actstar
         {
             if(!IsFastfalling) return;
             if(collisionState.IsTouchingBottom) return;
-            if(jumper && jumper.IsJumping) return;
+            if(jumper != null && jumper.IsJumping) return;
             float speed = body.Velocity.y + acceleration * Time.fixedDeltaTime;
             if(speed < terminalSpeed) speed = terminalSpeed;
             body.SetMoveVelocityY(speed);

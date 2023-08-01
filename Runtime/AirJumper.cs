@@ -9,9 +9,9 @@ namespace CHM.Actstar
     /// Jump implementation that lets the player jump multiple times in midair.
     /// This is the most common type of "multi-jump" in 2D platformers.
     /// </summary>
-    public class AirJumper : Jumper
+    [RequireComponent(typeof(ActstarBody))]
+    public class AirJumper : MonoBehaviour, IJumper
     {
-        
         [SerializeField,
         InfoBox("The speed curve of each jump along the Y axis, time-normalized.")]
         private AnimationCurve[] jumpCurves = {
@@ -21,25 +21,56 @@ namespace CHM.Actstar
         public int maximumJumpCount = 2;
         [Range(0, 2), Tooltip("The time length of each jump.")]
         public float jumpCooldown = 0.25f;
-        public override bool CanJump => (maximumJumpCount < 0 
+        public bool CanJump => (maximumJumpCount < 0 
         || jumpPointer < maximumJumpCount - 1) 
         && Time.fixedTime - previousJumpTime > jumpCooldown;
-        public override bool IsJumping => jumpPointer >= 0 
+        public bool IsJumping => jumpPointer >= 0 
         && Time.fixedTime - previousJumpTime <= jumpCooldown;
         private int jumpPointer = -1;
-        protected override void OnJump()
+        [Range(0, 1f), Tooltip("The amount of extra grounded time after leaving the ground.")]
+        public float coyoteTime = 0.2f;
+        private ActstarBody body;
+        private float extendGroundTimeUntil = float.MinValue;
+        private float previousJumpTime = float.MinValue;
+        private bool jumpCancelled  = false;
+        #if UNITY_EDITOR
+        [ShowInPlayMode, ShowInInspector, LabelText("Can Jump")]
+        protected bool DebugCanJump => Application.isPlaying ? CanJump : false;
+        [ShowInPlayMode, ShowInInspector, LabelText("Is Jumping")]
+        protected bool DebugIsJumping => Application.isPlaying ? IsJumping : false;
+        #endif
+        public void Jump()
         {
-            AdvanceJumpPointer();
+            if(CanJump)
+            {
+                previousJumpTime = Time.fixedTime;
+                jumpCancelled = false;
+                AdvanceJumpPointer();
+            }
         }
-        protected override void OnStart()
+        public void CancelJump()
         {
+            jumpCancelled = true;
+        }
+        void Awake() 
+        {
+            TryGetComponent<ActstarBody>(out body);
+        }
+        void Start() 
+        {
+            body.onTakeoff += UpdateCoyoteTime;
             body.onGrounded += ResetJumpPointer;
             body.onTakeoff += AdvanceJumpPointer;
         }
-        protected override void OnFixedUpdate()
+        // Update is called once per frame
+        void FixedUpdate()
         {
-            // UpdateJumpPointer();
+            UpdateCoyoteTime();
             UpdateJump();
+        }
+        private void UpdateCoyoteTime()
+        {
+            extendGroundTimeUntil = Time.fixedTime + coyoteTime;
         }
         private void UpdateJump()
         {

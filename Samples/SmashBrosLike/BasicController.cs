@@ -5,17 +5,17 @@ using UnityEngine.InputSystem;
 using CHM.Actstar;
 namespace CHM.Actstar.Samples.SmashBrosLike
 {
-    [RequireComponent(typeof(Mover), typeof(Jumper), typeof(Fastfaller))]
+    [RequireComponent(typeof(Mover), typeof(IJumper), typeof(Fastfaller))]
     public class BasicController : MonoBehaviour
     {
         public InputAction move, dash, jump, fastfall;
         private Mover mover;
-        private Jumper jumper;
+        private IJumper jumper;
         private Fastfaller fastfaller;
         void Awake() 
         {        
             TryGetComponent<Mover>(out mover);
-            TryGetComponent<Jumper>(out jumper);
+            TryGetComponent<IJumper>(out jumper);
             TryGetComponent<Fastfaller>(out fastfaller);
         }
         void OnEnable() 
