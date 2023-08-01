@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 using TriInspector;
 
 namespace CHM.Actstar
@@ -65,7 +66,6 @@ namespace CHM.Actstar
         public Vector2 TopNormal => topProbe.GetNormal();
         private Rigidbody2D rb;
         private Probe bottomProbe, leftProbe, rightProbe, topProbe;
-        private bool wasGrounded = true;
         #region Unity Events
         void Awake() 
         {
@@ -80,7 +80,6 @@ namespace CHM.Actstar
         }
         void FixedUpdate() 
         {
-            wasGrounded = IsTouchingBottom;
             bottomProbe.DoFixedUpdate();
             leftProbe.DoFixedUpdate();
             rightProbe.DoFixedUpdate();
@@ -95,9 +94,10 @@ namespace CHM.Actstar
         internal class Probe : MonoBehaviour
         {
             private ContactFilter2D filter;
-            public Vector2 direction;
-            public Rigidbody2D rb;
-            public float minProbeDistance = 0.1f;
+            private Vector2 direction;
+            private Rigidbody2D rb;
+            private Collider2D col;
+            private float minProbeDistance = 0.1f;
             private int numHits;
             public bool HasHits => numHits > 0;
             private List<RaycastHit2D> hits = new();
@@ -114,7 +114,12 @@ namespace CHM.Actstar
                     return normalCache.Value;
                 }
             }
-            public static Probe Create(GameObject attachTo, ProbeSettings probeSettings, Vector2 direction, Rigidbody2D rb, float minProbeDistance = 0.1f)
+            public static Probe Create(
+                GameObject attachTo, 
+                ProbeSettings probeSettings, 
+                Vector2 direction, 
+                Rigidbody2D rb, 
+                float minProbeDistance = 0.1f)
             {
                 Probe probe = attachTo.AddComponent<Probe>();
                 probe.filter = new(){
@@ -123,16 +128,22 @@ namespace CHM.Actstar
                     maxNormalAngle = probeSettings.maxNormalAngle,
                 };
                 probe.direction = direction;
-                probe.rb = rb;
                 probe.minProbeDistance = minProbeDistance;
                 probe.hideFlags |= HideFlags.HideInInspector;
+                probe.rb = rb;
+                // Get first attached collider.
+                Collider2D[] temp = new Collider2D[1];
+                rb.GetAttachedColliders(temp);
+                probe.col = temp[0];
                 return probe;
             }
             public void DoFixedUpdate() 
             {
                 float nextStepLength = Vector2.Dot(rb.velocity * Time.fixedDeltaTime, direction);
                 float probeDistance = Mathf.Max(minProbeDistance, nextStepLength);
-                numHits = rb.Cast(direction, filter, hits, probeDistance);
+                numHits = col.Cast(direction, filter, hits, probeDistance);
+                hits = hits.Where(x => !Physics2D.GetIgnoreCollision(x.collider, col)).ToList();
+                numHits = hits.Count;
                 normalCache = null;
             }
         }
@@ -142,14 +153,14 @@ namespace CHM.Actstar
         public static bool GetHasHits(this CollisionState.Probe probe)
         {
             #if UNITY_EDITOR
-            if(!probe) return false;
+            if(!Application.isPlaying) return false;
             #endif
             return probe.HasHits;
         }
         public static Vector2 GetNormal(this CollisionState.Probe probe)
         {
             #if UNITY_EDITOR
-            if(!probe) return Vector2.zero;
+            if(!Application.isPlaying) return Vector2.zero;
             #endif
             return probe.Normal;
         }

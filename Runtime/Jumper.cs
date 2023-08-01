@@ -22,11 +22,7 @@ namespace CHM.Actstar
         public abstract bool CanJump { get; }
         public abstract bool IsJumping { get; }
         protected ActstarBody body;
-        private bool wasBodyGrounded = true;
         private float extendGroundTimeUntil = float.MinValue;
-        protected bool Grounded => body.IsGrounded 
-        || Time.fixedTime < extendGroundTimeUntil;
-        protected bool wasGrounded { get; private set; } = true;
         protected float previousJumpTime { get; private set; } = float.MinValue;
         protected bool jumpCancelled { get; private set; } = false;
         public void Jump()
@@ -43,6 +39,7 @@ namespace CHM.Actstar
             jumpCancelled = true;
         }
         protected virtual void OnAwake() {}
+        protected virtual void OnStart() {}
         protected abstract void OnFixedUpdate();
         protected abstract void OnJump();
         void Awake() 
@@ -50,20 +47,20 @@ namespace CHM.Actstar
             TryGetComponent<ActstarBody>(out body);
             OnAwake();
         }
+        void Start() 
+        {
+            body.onTakeoff += UpdateCoyoteTime;
+            OnStart();
+        }
         // Update is called once per frame
         void FixedUpdate()
         {
             UpdateCoyoteTime();
             OnFixedUpdate();
-            wasBodyGrounded = body.IsGrounded;
-            wasGrounded = Grounded;
         }
         private void UpdateCoyoteTime()
         {
-            if(!body.IsGrounded && wasBodyGrounded)
-            {
-                extendGroundTimeUntil = Time.fixedTime + coyoteTime;
-            }
+            extendGroundTimeUntil = Time.fixedTime + coyoteTime;
         }
     }
 }

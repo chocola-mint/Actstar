@@ -38,6 +38,7 @@ Good for making the body stick to moving platforms.")]
         public bool IsGrounded => verticalState == VerticalState.Grounded;
         public bool IsRising => verticalState == VerticalState.Rising;
         public bool IsFalling => verticalState == VerticalState.Falling;
+        public event System.Action onGrounded, onTakeoff;
         public void SetMoveVelocityX(float x)
         {
             moveVelocity.x = x;
@@ -91,7 +92,7 @@ Good for making the body stick to moving platforms.")]
             
             moveXSet = moveYSet = false;
         }
-        void OnCollisionStay2D(Collision2D other) 
+        void OnCollisionEnter2D(Collision2D other) 
         {
             if(sticky && other.rigidbody)
                 transform.SetParent(other.rigidbody.transform);
@@ -104,6 +105,7 @@ Good for making the body stick to moving platforms.")]
         }
         private void UpdateVerticalState()
         {
+            bool wasGrounded = IsGrounded;
             switch(verticalState)
             {
                 case VerticalState.Rising:
@@ -115,11 +117,13 @@ Good for making the body stick to moving platforms.")]
                     break;
                 case VerticalState.Grounded:
                 default:
-                    if(collisionState.IsTouchingBottom) return; // todo: this doesn't cover every case
+                    if(collisionState.IsTouchingBottom) return;
                     if(rb.velocity.y <= 0) verticalState = VerticalState.Falling;
                     else verticalState = VerticalState.Rising;
                     break;
             }
+            if(!wasGrounded && IsGrounded) onGrounded?.Invoke();
+            else if(wasGrounded && !IsGrounded) onTakeoff?.Invoke();
         }
     }
 }

@@ -47,14 +47,19 @@ namespace CHM.Actstar
                 if(col.attachedRigidbody 
                 && col.TryGetComponent<PlatformEffector2D>(out _))
                 {
-                    // if(rb.IsTouching(col))
-                    // {
-                    //     if(!UseFallthrough) 
-                    //         continue;
-                    // }
+                    // This avoids falling early through a one way platform's edge.
+                    // It enforces the requirement that once on a platform the player
+                    // needs to be no longer touching to ignore it.
+                    if(rb.IsTouching(col))
+                    {
+                        if(!UseFallthrough) 
+                            continue;
+                    }
                     bool shouldIgnore = ComputeShouldIgnore(col);
                     foreach(var attachedCollider in attachedColliders)
                         Physics2D.IgnoreCollision(attachedCollider, col, shouldIgnore);
+                    // if(shouldIgnore) Debug.Log($"Ignore {col.attachedRigidbody}");
+                    // else Debug.Log($"No ignore {col.attachedRigidbody}");
                 }
             }
         }

@@ -31,19 +31,15 @@ namespace CHM.Actstar
         {
             AdvanceJumpPointer();
         }
+        protected override void OnStart()
+        {
+            body.onGrounded += ResetJumpPointer;
+            body.onTakeoff += AdvanceJumpPointer;
+        }
         protected override void OnFixedUpdate()
         {
-            UpdateJumpPointer();
+            // UpdateJumpPointer();
             UpdateJump();
-        }
-        private void UpdateJumpPointer()
-        {
-            // Reset jump pointer on ground.
-            if (Grounded && !wasGrounded)
-                ResetJumpPointer();
-            // Take away one extra jump on leave ground.
-            else if (!Grounded && !wasGrounded && jumpPointer == -1)
-                AdvanceJumpPointer();
         }
         private void UpdateJump()
         {

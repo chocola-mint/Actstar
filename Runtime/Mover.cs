@@ -18,6 +18,13 @@ namespace CHM.Actstar
         [Range(0, 50)]
         public float airDashSpeed = 5;
         public bool lockYWhenDashing = false;
+        [DisableIf(nameof(IsRuntime))]
+        [SerializeField, Min(0), Tooltip(
+            "A force exerted against the bottom normal for one frame "
+            + "when the body lands. Can help with landing and snapping "
+            + "to moving platforms. If this field is set too large, "
+            + "you may experience numerical instability. So it's best to leave it as is.")]
+        private float stabilizingImpulse = 100;
         [ShowInPlayMode, ShowInInspector]
         public float MoveAxis { get; private set; }
         [ShowInPlayMode, ShowInInspector]
@@ -30,6 +37,12 @@ namespace CHM.Actstar
         {
             TryGetComponent<CollisionState>(out collisionState);
             TryGetComponent<ActstarBody>(out body);
+        }
+        void Start() 
+        {
+            body.onGrounded += () => {
+                body.AddForce(collisionState.BottomNormal * -stabilizingImpulse);
+            };
         }
         void FixedUpdate() 
         {
@@ -51,13 +64,9 @@ namespace CHM.Actstar
             // Align with move axis. Perpendicular rotates the vector CCW.
             // Since the bottom normal faces upwards, this means it will be facing -X.
             alongSurface *= -MoveAxis;
+            Debug.DrawRay(transform.position, alongSurface, Color.yellow);
             Vector2 vel = alongSurface.normalized * moveSpeed;
-            body.SetMoveVelocityX(vel.x);
-            if(!Mathf.Approximately(vel.y, 0))
-            { 
-                // vel.y -= 0.1f; // bias
-                body.SetMoveVelocityY(vel.y);
-            }
+            body.SetMoveVelocity(vel);
         }
         private void AirMoveUpdate()
         {
@@ -82,5 +91,8 @@ namespace CHM.Actstar
         {
             IsDashing = false;
         }
+        #if UNITY_EDITOR
+        private bool IsRuntime() => Application.isPlaying;
+        #endif
     }
 }
