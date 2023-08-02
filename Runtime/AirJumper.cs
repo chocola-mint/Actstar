@@ -21,24 +21,26 @@ namespace CHM.Actstar
         public int maximumJumpCount = 2;
         [Range(0, 2), Tooltip("The time length of each jump.")]
         public float jumpCooldown = 0.25f;
+        [Min(0), Tooltip("How fast the jump speed decays exponentially on jump cancel."
+        + "The higher this number is, the more abrupt short-hops will look.")]
+        public float jumpCancelDecayRate = 10;
+        [Range(0, 1f), Tooltip("The amount of extra grounded time after leaving the ground.")]
+        public float coyoteTime = 0.2f;
+        [ShowInPlayMode, ShowInInspector]
         public bool CanJump => (maximumJumpCount < 0 
         || jumpPointer < maximumJumpCount - 1) 
         && Time.fixedTime - previousJumpTime > jumpCooldown;
+        [ShowInPlayMode, ShowInInspector]
         public bool IsJumping => jumpPointer >= 0 
         && Time.fixedTime - previousJumpTime <= jumpCooldown;
-        private int jumpPointer = -1;
-        [Range(0, 1f), Tooltip("The amount of extra grounded time after leaving the ground.")]
-        public float coyoteTime = 0.2f;
         private ActstarBody body;
-        private float extendGroundTimeUntil = float.MinValue;
+        // The jump pointer points to the current jump curve index.
+        // It starts from -1, which indicates that no jump curve is active at the moment.
+        private int jumpPointer = -1;
+        private float coyoteTimeUntil = float.MinValue;
         private float previousJumpTime = float.MinValue;
-        private bool jumpCancelled  = false;
-        #if UNITY_EDITOR
-        [ShowInPlayMode, ShowInInspector, LabelText("Can Jump")]
-        protected bool DebugCanJump => Application.isPlaying ? CanJump : false;
-        [ShowInPlayMode, ShowInInspector, LabelText("Is Jumping")]
-        protected bool DebugIsJumping => Application.isPlaying ? IsJumping : false;
-        #endif
+        private float previousJumpCancelTime = float.MinValue;
+        private bool jumpCancelled = false;
         public void Jump()
         {
             if(CanJump)
@@ -50,7 +52,12 @@ namespace CHM.Actstar
         }
         public void CancelJump()
         {
-            jumpCancelled = true;
+            // Only the first jump is cancellable (short hop)
+            if(jumpPointer == 0)
+            {
+                jumpCancelled = true;
+                previousJumpCancelTime = Time.fixedTime;
+            }
         }
         void Awake() 
         {
@@ -59,8 +66,8 @@ namespace CHM.Actstar
         void Start() 
         {
             body.onTakeoff += UpdateCoyoteTime;
-            body.onGrounded += ResetJumpPointer;
             body.onTakeoff += AdvanceJumpPointer;
+            body.onGrounded += ResetJumpPointer;
         }
         // Update is called once per frame
         void FixedUpdate()
@@ -70,16 +77,13 @@ namespace CHM.Actstar
         }
         private void UpdateCoyoteTime()
         {
-            extendGroundTimeUntil = Time.fixedTime + coyoteTime;
+            coyoteTimeUntil = Time.fixedTime + coyoteTime;
         }
         private void UpdateJump()
         {
             if(IsJumping)
             {
-                float t = (Time.fixedTime - previousJumpTime) / jumpCooldown;
-                if(jumpCancelled && jumpPointer == 0) t = 1;
-                float jumpSpeed = GetCurrentJumpCurve()
-                .Evaluate(t);
+                float jumpSpeed = GetJumpSpeed();
                 body.SetMoveVelocityY(jumpSpeed);
                 body.SetRising();
             }
@@ -105,6 +109,17 @@ namespace CHM.Actstar
                     maximumJumpCount - 1, 
                     jumpCurves.Length - 1)];
             }
+        }
+        private float GetJumpSpeed()
+        {
+            float t = (Time.fixedTime - previousJumpTime) / jumpCooldown;
+            if(jumpCancelled) 
+            {
+                float t2 = (Time.fixedTime - previousJumpCancelTime) * jumpCancelDecayRate;
+                float decay = 1.0f / Mathf.Exp(t2);
+                return decay * GetCurrentJumpCurve().Evaluate(t);
+            }
+            else return GetCurrentJumpCurve().Evaluate(t);
         }
     }
 }
