@@ -5,6 +5,10 @@ using TriInspector;
 
 namespace CHM.Actstar
 {
+    /// <summary>
+    /// Implements horizontal movement. Notably lets the player stick to the ground
+    /// while moving.
+    /// </summary>
     [RequireComponent(typeof(CollisionState))]
     [RequireComponent(typeof(ActstarBody))]
     public class Mover : MonoBehaviour

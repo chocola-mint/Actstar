@@ -6,8 +6,13 @@ using TriInspector;
 namespace CHM.Actstar
 {
     /// <summary>
-    /// Implements fastfalling. If it detects a Jumper component, it will wait until
+    /// Implements fastfalling. 
+    /// <br/>
+    /// If it detects a Jumper component, it will wait until
     /// the Jumper is no longer jumping.
+    /// <br/>
+    /// If it detects a Platformer component, it will enable platform fallthrough
+    /// during fastfall.
     /// </summary>
     [DeclareBoxGroup("PPS", Title = "Platform Probe Settings")]
     [RequireComponent(typeof(CollisionState))]

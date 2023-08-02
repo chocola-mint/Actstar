@@ -7,6 +7,8 @@ namespace CHM.Actstar
 {
     /// <summary>
     /// Component that handles interactions with PlatformEffectors (one-way platforms).
+    /// <br/>
+    /// Also supports falling through platforms.
     /// </summary>
     [RequireComponent(typeof(Rigidbody2D))]
     public class Platformer : MonoBehaviour

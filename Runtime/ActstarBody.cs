@@ -6,7 +6,7 @@ using TriInspector;
 namespace CHM.Actstar
 {
     /// <summary>
-    /// A meditator for a velocity-based Rigidbody2D.
+    /// The core of the Actstar package. A meditator for a velocity-based Rigidbody2D.
     /// </summary>
     [DefaultExecutionOrder(1000)]
     [RequireComponent(typeof(CollisionState))]
