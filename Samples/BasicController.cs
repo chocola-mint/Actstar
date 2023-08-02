@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using CHM.Actstar;
-namespace CHM.Actstar.Samples.SmashBrosLike
+namespace CHM.Actstar.Samples
 {
     [RequireComponent(typeof(Mover), typeof(IJumper), typeof(Fastfaller))]
     public class BasicController : MonoBehaviour

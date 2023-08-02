@@ -1210,7 +1210,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: add92274008fffd4bbc6d46f082859c0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  coyoteTime: 0.2
   jumpCurves:
   - serializedVersion: 2
     m_Curve:
@@ -1237,6 +1236,8 @@ MonoBehaviour:
     m_RotationOrder: 4
   maximumJumpCount: 2
   jumpCooldown: 0.25
+  jumpCancelDecayRate: 10
+  coyoteTime: 0.2
 --- !u!114 &1008939952
 MonoBehaviour:
   m_ObjectHideFlags: 0
