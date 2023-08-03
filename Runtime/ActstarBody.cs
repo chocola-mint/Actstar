@@ -39,6 +39,7 @@ Good for making the body stick to moving platforms.")]
         public bool IsRising => verticalState == VerticalState.Rising;
         public bool IsFalling => verticalState == VerticalState.Falling;
         public event System.Action onGrounded, onTakeoff;
+        private IMovingPlatform currentPlatform = null;
         public void SetMoveVelocityX(float x)
         {
             moveVelocity.x = x;
@@ -79,31 +80,46 @@ Good for making the body stick to moving platforms.")]
             {
                 moveWeight = Mathf.Min(moveWeight + Time.fixedDeltaTime, 1);
             }
-            if(IsGrounded) rb.AddForce(-collisionState.BottomNormal * 100);
+            if(IsGrounded) rb.AddForce(-collisionState.BottomNormal * 200);
 
             Vector2 damping = IsGrounded ? groundDamping : airDamping;
             Vector2 trueMoveVelocity = rb.velocity * damping;
+            Vector2 platformVelocity = Vector2.zero;
+            if(currentPlatform != null) 
+            {
+                platformVelocity = currentPlatform.Velocity;
+                if(!moveXSet)
+                    platformVelocity.x = 0;
+                // rb.AddForce(-collisionState.BottomNormal * 100);
+            }
             if(moveXSet)
                 trueMoveVelocity.x = moveVelocity.x;
             if(moveYSet)
                 trueMoveVelocity.y = moveVelocity.y;
+            
+            trueMoveVelocity = Vector3.Slerp(rb.velocity, trueMoveVelocity + 6 * platformVelocity, moveWeight);
+            rb.velocity = trueMoveVelocity;
 
             UpdateVerticalState();
-            
-            rb.velocity = Vector3.Slerp(rb.velocity, trueMoveVelocity, moveWeight); 
             
             moveXSet = moveYSet = false;
         }
         void OnCollisionEnter2D(Collision2D other) 
         {
-            if(sticky && other.rigidbody)
-                transform.SetParent(other.rigidbody.transform);
+            if(sticky && other.gameObject.TryGetComponent<IMovingPlatform>(out var platform))
+            {
+                transform.SetParent(other.transform);
+                currentPlatform = platform;
+            }
         }
         void OnCollisionExit2D(Collision2D other) 
         {
-            if(sticky && other.rigidbody)
-                if(other.rigidbody.transform == transform.parent) 
+            if(sticky && other.gameObject.TryGetComponent<IMovingPlatform>(out var platform))
+                if(platform == currentPlatform) 
+                {
                     transform.SetParent(null);
+                    currentPlatform = null;
+                }
         }
         private void UpdateVerticalState()
         {

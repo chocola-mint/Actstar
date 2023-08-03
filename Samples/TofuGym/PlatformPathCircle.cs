@@ -2,9 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TriInspector;
+using CHM.Actstar;
 
 [RequireComponent(typeof(Rigidbody2D))]
-public class PlatformPathCircle : MonoBehaviour
+public class PlatformPathCircle : MonoBehaviour, IMovingPlatform
 {
     [Min(0)]
     public float radius = 3.0f;
@@ -20,6 +21,20 @@ public class PlatformPathCircle : MonoBehaviour
     public float phase = 0;
     private Rigidbody2D rb;
     private Vector3 source;
+    [ShowInInspector, ShowInPlayMode]
+    public Vector2 Velocity {
+        get {
+            float theta = Theta;
+            return new Vector2(-Mathf.Sin(theta), Mathf.Cos(theta)) * radius / period;
+        }
+    }
+    private Vector2 Position {
+        get {
+            float theta = Theta;
+            return new Vector2(Mathf.Cos(theta), Mathf.Sin(theta)) * radius;
+        }
+    }
+    private float Theta => Mathf.Lerp(0, 2 * Mathf.PI, Mathf.Repeat(phase + Time.fixedTime / period, 1));
     void Awake() 
     {
         TryGetComponent<Rigidbody2D>(out rb);
@@ -32,11 +47,8 @@ public class PlatformPathCircle : MonoBehaviour
     void FixedUpdate() 
     {
         if(Mathf.Approximately(period, 0)) return; // Avoid divide by zero.
-        float t = Mathf.Repeat(
-                phase + Time.fixedTime / period, 1);
-        rb.MovePosition(source
-            + Quaternion.Euler(0, 0, Mathf.Lerp(0, 360, t)) 
-            * Vector3.right * radius);
+        float theta = Theta;
+        rb.MovePosition((Vector2) source + Position);
     }
     void OnDrawGizmos() 
     {
