@@ -22,7 +22,9 @@ namespace CHM.Actstar
         [Range(0, 50)]
         public float airDashSpeed = 5;
         public bool lockYWhenDashing = false;
+        #if UNITY_EDITOR
         [DisableIf(nameof(IsRuntime))]
+        #endif
         [SerializeField, Min(0), Tooltip(
             "A force exerted against the bottom normal for one frame "
             + "when the body lands. Can help with landing and snapping "
