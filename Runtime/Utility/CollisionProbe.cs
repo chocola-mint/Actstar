@@ -24,7 +24,7 @@ namespace CHM.Actstar.Utility
         public bool HasHits => numHits > 0;
         private List<RaycastHit2D> hits = new();
         private Vector2? normalCache = null;
-        public Vector2 Normal {
+        internal Vector2 Normal {
             get {
                 if(!normalCache.HasValue)  
                 {
@@ -36,7 +36,7 @@ namespace CHM.Actstar.Utility
                 return normalCache.Value;
             }
         }
-        public static CollisionProbe Create(
+        internal static CollisionProbe Create(
             GameObject attachTo, 
             CollisionProbeSettings probeSettings, 
             Vector2 direction, 
@@ -59,7 +59,7 @@ namespace CHM.Actstar.Utility
             probe.col = temp[0];
             return probe;
         }
-        public void DoFixedUpdate() 
+        internal void DoFixedUpdate() 
         {
             float nextStepLength = Vector2.Dot(rb.velocity * Time.fixedDeltaTime, direction);
             float probeDistance = Mathf.Max(minProbeDistance, nextStepLength);

@@ -58,26 +58,44 @@ namespace CHM.Actstar
             if(collisionState.IsTouchingRight && MoveAxis > 0
             || collisionState.IsTouchingLeft && MoveAxis < 0)
                 return;
+            float moveSpeed;
             if(body.IsGrounded)
-                GroundMoveUpdate();
-            else AirMoveUpdate();
-            DashLockYUpdate();
+                moveSpeed = IsDashing ? dashSpeed : speed;
+            else moveSpeed = IsDashing ? airDashSpeed : airSpeed;
+            if(TryGetSurfaceVector(out Vector2 surfaceVector))
+            {
+                Debug.DrawRay(transform.position, surfaceVector, Color.yellow);
+                Vector2 vel = surfaceVector.normalized * moveSpeed;
+                body.SetMoveVelocity(vel);
+            }
+            else
+            {
+                body.SetMoveVelocityX(MoveAxis * moveSpeed);
+            }
         }
-        private void GroundMoveUpdate()
+        private bool TryGetSurfaceVector(out Vector2 surfaceVector)
         {
-            float moveSpeed = IsDashing ? dashSpeed : speed;
-            var alongSurface = Vector2.Perpendicular(collisionState.BottomNormal);
-            // Align with move axis. Perpendicular rotates the vector CCW.
-            // Since the bottom normal faces upwards, this means it will be facing -X.
-            alongSurface *= -MoveAxis;
-            Debug.DrawRay(transform.position, alongSurface, Color.yellow);
-            Vector2 vel = alongSurface.normalized * moveSpeed;
-            body.SetMoveVelocity(vel);
-        }
-        private void AirMoveUpdate()
-        {
-            float moveSpeed = IsDashing ? airDashSpeed : airSpeed;
-            body.SetMoveVelocityX(MoveAxis * moveSpeed);
+            if(body.IsGrounded)
+            {
+                surfaceVector = Vector2.Perpendicular(collisionState.BottomNormal);
+                surfaceVector *= -MoveAxis;
+                return true;
+            }
+            else if(collisionState.IsTouchingTop)
+            {
+                surfaceVector = Vector2.Perpendicular(collisionState.TopNormal);
+                surfaceVector *= MoveAxis;
+                if(surfaceVector.y >= 0)
+                    return false;
+                return true;
+            }
+            // else if(collisionState.IsTouchingSide)
+            // {
+            //     surfaceVector = Vector2.Perpendicular(collisionState.SideNormal);
+            //     return true;
+            // }
+            surfaceVector = Vector2.zero;
+            return false;
         }
         private void DashLockYUpdate()
         {
