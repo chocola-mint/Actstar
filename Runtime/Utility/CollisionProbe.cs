@@ -76,14 +76,14 @@ namespace CHM.Actstar.Utility
         public static bool GetHasHits(this CollisionProbe probe)
         {
             #if UNITY_EDITOR
-            if(!Application.isPlaying) return false;
+            if(!Application.isPlaying || probe == null) return false;
             #endif
             return probe.HasHits;
         }
         public static Vector2 GetNormal(this CollisionProbe probe)
         {
             #if UNITY_EDITOR
-            if(!Application.isPlaying) return Vector2.zero;
+            if(!Application.isPlaying || probe == null) return Vector2.zero;
             #endif
             return probe.Normal;
         }
